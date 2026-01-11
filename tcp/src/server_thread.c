@@ -18,8 +18,7 @@ pthread_t tid;
 pthread_t readerthreads[100];
 int readercount = 0;
 
-int timeout_recv(int fd, int *buf, int len,  int nsec)
-{
+int timeout_recv(int fd, int *buf, int len, int nsec) {
     struct timeval timeout;
     timeout.tv_sec = nsec;
     timeout.tv_usec = 0;
@@ -36,14 +35,12 @@ int timeout_recv(int fd, int *buf, int len,  int nsec)
     return n;
 }
 // Reader Function
-void* reader(void* args)
-{
+void* reader(void* args) {
     // Lock the semaphore
     sem_wait(&x);
     readercount++;
  
     if (readercount == 1) sem_wait(&y);
- 
     // Unlock the semaphore
     sem_post(&x);
     
@@ -52,11 +49,9 @@ void* reader(void* args)
  
     int nread, status = 1, kkk = 0;
     int client_request = *((int*)args);
-    while(1)
-    {
+    while(1) {
         ++kkk;
-        if(kkk == 10000)
-        {
+        if(kkk == 10000) {
             nread = timeout_recv(client_request, &status, sizeof(status), 10);
             printf("nread = %d   status = %d\n", nread, status);
             if (nread <= 0) break;
@@ -67,7 +62,7 @@ void* reader(void* args)
     // Lock the semaphore
     sem_wait(&x);
     readercount--;
-    if (readercount == 0) {
+    if (!readercount) {
         printf("readercount == 0\n");
         sem_post(&y);
     }
@@ -80,8 +75,7 @@ void* reader(void* args)
 }
 // Driver Code
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     // Initialize variables
     if (1 == argc) return 0;
     int port;
@@ -91,8 +85,7 @@ int main(int argc, char *argv[])
     strcpy(ip, ptr);
     ptr = strtok(NULL, ":");
     port = atoi(ptr);
-    if(0 == strcmp(ip, "-1") || 0 == port)
-    {
+    if(0 == strcmp(ip, "-1") || !port) {
         printf("Check the IP, PORT\n");
         pthread_exit(NULL);
         return 0;
@@ -119,14 +112,11 @@ int main(int argc, char *argv[])
     // requests queued
     if (listen(serverSocket, 128) == 0) printf("Listening\n");
     else printf("Error\n");
- 
     // Array for thread
     int thread_num = 0, thread_total = 2+1, status = 0, nread = -1, kkk = 0;
-    
     pthread_t tid[thread_total];
 
     while (1) {
-        
         addr_size = sizeof(serverStorage);
         // Extract the first
         // connection in the queue
@@ -135,19 +125,16 @@ int main(int argc, char *argv[])
                            &addr_size);
                            
         if (pthread_create(&readerthreads[thread_num++], NULL,
-                            reader, &newSocket) != 0)
+                            reader, &newSocket) != 0) {
             // Error in creating thread
-        {
             printf("Failed to create thread\n");
             status = -1;
         }
-        else
-        {
+        else {
             printf("create thread sucessfully\n");
             status = 1;
         }
-        if( send(newSocket, &status, sizeof(status), 0) < 0)
-        {
+        if( send(newSocket, &status, sizeof(status), 0) < 0) {
             puts("Send failed");
             return 1;
         }
@@ -173,3 +160,4 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+
